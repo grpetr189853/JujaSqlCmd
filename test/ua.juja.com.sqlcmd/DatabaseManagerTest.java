@@ -2,25 +2,29 @@ package ua.juja.com.sqlcmd;
 
 import org.junit.Before;
 import org.junit.Test;
-import ua.com.juja.sqlcmd.DataSet;
-import ua.com.juja.sqlcmd.DatabaseManager;
+import ua.com.juja.sqlcmd.model.DataSet;
+import ua.com.juja.sqlcmd.model.DatabaseManager;
 
-import java.sql.Connection;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
-public class DatabaseManagerTest {
-    DatabaseManager manager;
+public abstract class DatabaseManagerTest {
+    private DatabaseManager manager;
     @Before
     public void setUp() {
-        manager = new DatabaseManager();
+
+        manager = getDatabaseManager();
         manager.connect("sqlcmd", "postgres", "postgres");
+
     }
+
+    protected abstract DatabaseManager getDatabaseManager();
+
     @Test
     public void testGetAllTablesNames() {
         String[] tableNames = manager.getTableNames();
-        assertEquals("[user, candidates, customers, test]", Arrays.toString(tableNames));
+        assertEquals("[user, customers, candidates, test]", Arrays.toString(tableNames));
     }
 
     @Test
@@ -29,10 +33,10 @@ public class DatabaseManagerTest {
         manager.clear("user");
         //when
         DataSet input = new DataSet();
-        input.put("id",13);
         input.put("name","Stiven");
         input.put("password","pass");
-        manager.create(input);
+        input.put("id",13);
+        manager.create("user", input);
         //then
         DataSet[] users = manager.getTableData("user");
         assertEquals(1, users.length);
@@ -47,10 +51,10 @@ public class DatabaseManagerTest {
         //given
         manager.clear("user");
         DataSet input = new DataSet();
-        input.put("id",13);
         input.put("name","Stiven");
         input.put("password","pass");
-        manager.create(input);
+        input.put("id",13);
+        manager.create("user", input);
         //when
         DataSet newValue = new DataSet();
 

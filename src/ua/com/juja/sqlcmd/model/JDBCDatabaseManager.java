@@ -1,10 +1,9 @@
-package ua.com.juja.sqlcmd;
+package ua.com.juja.sqlcmd.model;
 
 import java.sql.*;
 import java.util.Arrays;
-import java.util.Random;
 
-public class DatabaseManager {
+public class JDBCDatabaseManager implements DatabaseManager {
     private Connection connection;
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException {
@@ -12,7 +11,7 @@ public class DatabaseManager {
         String user = "postgres";
         String password = "postgres";
 
-        DatabaseManager manager = new DatabaseManager();
+        JDBCDatabaseManager manager = new JDBCDatabaseManager();
 
         manager.connect(database, user, password);
 
@@ -31,7 +30,7 @@ public class DatabaseManager {
         data.put("id",13);
         data.put("name","Stiven");
         data.put("password","pass");
-        manager.create(data);
+        manager.create("user", data);
         //select statement
         String tableName = "user";
 
@@ -57,6 +56,7 @@ public class DatabaseManager {
 
     }
 
+    @Override
     public DataSet[] getTableData(String tableName) {
         try {
             int size = getSize(tableName);
@@ -92,6 +92,7 @@ public class DatabaseManager {
         return size;
     }
 
+    @Override
     public String[] getTableNames() {
         try {
             String sql4 = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ";
@@ -112,19 +113,21 @@ public class DatabaseManager {
 
     }
 
-    public void connect(String database, String user, String password) {
+    @Override
+    public void connect(String database, String userName, String password) {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            System.out.println("Please add JBDC jar to project");
-            e.printStackTrace();
+            throw new RuntimeException("Please add JDBC jar to project",e);
         }
         try {
-            connection =  DriverManager.getConnection("jdbc:postgresql://127.0.0.1:5432/" + database, user, password);
+            connection =  DriverManager.getConnection("jdbc:postgresql://127.0.0.1:5432/" + database, userName, password);
         } catch (SQLException e) {
-            System.out.println(String.format("Can't get connection for database: %s user: %s ", database, user));
-            e.printStackTrace();
-            connection =  null;
+
+            connection = null;
+            throw new RuntimeException(
+                    String.format("Can't get connection for model: %s user: %s ",
+                            database, userName));
         }
     }
 
@@ -152,6 +155,7 @@ public class DatabaseManager {
         return connection;
     }
 
+    @Override
     public void clear(String tableName) {
         try{
             Statement stmt  = connection.createStatement();
@@ -163,7 +167,8 @@ public class DatabaseManager {
         }
     }
 
-    public void create(DataSet input) {
+    @Override
+    public void create(String tableName, DataSet input) {
         try {
             Statement stmt = connection.createStatement();
 
@@ -175,7 +180,7 @@ public class DatabaseManager {
             values = getValuesFormatted(input, values, "'%s',");
 
 
-            stmt.executeUpdate("INSERT INTO public.user (" + tableNames + ")" + "VALUES (" + values + ")");
+            stmt.executeUpdate("INSERT INTO public." + tableName +" (" + tableNames + ")" + "VALUES (" + values + ")");
         } catch (SQLException e){
             e.printStackTrace();
         }
@@ -190,6 +195,7 @@ public class DatabaseManager {
         return values;
     }
 
+    @Override
     public void update(String tableName, int id, DataSet newValue) {
         try{
             String tableNames = getNamesFormatted(newValue, "%s = ?,");
