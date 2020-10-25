@@ -7,13 +7,21 @@ import ua.com.juja.sqlcmd.view.Console;
 import ua.com.juja.sqlcmd.view.View;
 
 public class MainController {
-    public static void main(String[] args) {
-        View view = new Console();
-        DatabaseManager manager = new JDBCDatabaseManager();
 
+    private View view;
+    private final DatabaseManager manager;
+
+    public MainController(View view, DatabaseManager manager) {
+        this.view = view;
+        this.manager = manager;
+    }
+    public void run () {
+        connectToDB();
+    }
+    private void connectToDB() {
         view.write("Привет юзер!");
+        view.write("Введи пожалуйста имя базы данных, имя пользователя и пароль в формате: database|username|password");
         while (true) {
-            view.write("Введи пожалуйста имя базы данных, имя пользователя и пароль в формате: database|username|password");
             String string = view.read();
             String[] data = string.split("\\|");
             String databseName = data[0];
